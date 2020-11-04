@@ -392,21 +392,23 @@ export abstract class TextFieldBase extends FormElement {
             'off' | 'none' | 'on' | 'sentences' | 'words' | 'characters') :
         undefined;
     const showValidationMessage = this.validationMessage && !this.isUiValid;
+    const ariaControlsOrUndef =
+        this.shouldRenderHelperText ? 'helper-text' : undefined;
+    const ariaDescribedbyOrUndef =
+        this.focused || this.helperPersistent || showValidationMessage ?
+        'helper-text' :
+        undefined;
+    const ariaErrortextOrUndef =
+        showValidationMessage ? 'helper-text' : undefined;
     // TODO: live() directive needs casting for lit-analyzer
     // https://github.com/runem/lit-analyzer/pull/91/files
     // TODO: lit-analyzer labels min/max as (number|string) instead of string
     return html`
       <input
           aria-labelledby="label"
-          aria-controls="${
-        ifDefined(this.shouldRenderHelperText ? 'helper-text' : undefined)}"
-          aria-describedby="${
-        ifDefined(
-            this.focused || this.helperPersistent || showValidationMessage ?
-                'helper-text' :
-                undefined)}"
-         aria-errortext="${
-        ifDefined(showValidationMessage ? 'helper-text' : undefined)}"
+          aria-controls="${ifDefined(ariaControlsOrUndef)}"
+          aria-describedby="${ifDefined(ariaDescribedbyOrUndef)}"
+          aria-errortext="${ifDefined(ariaErrortextOrUndef)}"
           class="mdc-text-field__input"
           type="${this.type}"
           .value="${live(this.value) as unknown as string}"
@@ -451,20 +453,20 @@ export abstract class TextFieldBase extends FormElement {
       'mdc-text-field-helper-text--validation-msg': showValidationMessage,
     };
 
+    const ariaHiddenOrUndef =
+        this.focused || this.helperPersistent || showValidationMessage ?
+        undefined :
+        'true';
+    const helperText =
+        showValidationMessage ? this.validationMessage : this.helper;
     return html`
       <div class="mdc-text-field-helper-line">
-        <div
-        id="helper-text"
-        aria-hidden="${
-        ifDefined(
-            this.focused || this.helperPersistent || showValidationMessage ?
-                undefined :
-                'true')}"
-        class="mdc-text-field-helper-text ${classMap(classes)}">${
-        showValidationMessage ? this.validationMessage : this.helper}</div>
+        <div id="helper-text"
+             aria-hidden="${ifDefined(ariaHiddenOrUndef)}"
+             class="mdc-text-field-helper-text ${classMap(classes)}"
+             >${helperText}</div>
         ${charCounterTemplate}
-      </div>
-    `;
+      </div>`;
   }
 
   protected renderCharCounter() {
@@ -473,8 +475,9 @@ export abstract class TextFieldBase extends FormElement {
     }
 
     const length = Math.min(this.value.length, this.maxLength);
-    return html`<span class="mdc-text-field-character-counter">${length} / ${
-        this.maxLength}</span>`;
+    return html`
+      <span class="mdc-text-field-character-counter"
+            >${length} / ${this.maxLength}</span>`;
   }
 
   protected onInputFocus() {
